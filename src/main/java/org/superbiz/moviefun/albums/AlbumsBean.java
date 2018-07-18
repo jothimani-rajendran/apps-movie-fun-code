@@ -27,17 +27,17 @@ import java.util.List;
 @Repository
 public class AlbumsBean {
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @PersistenceContext(unitName = "albums-persistence")
+    private EntityManager albumsContainerEntityManagerFactoryBean;
 
-    @Transactional
+
     public void addAlbum(Album album) {
-        entityManager.persist(album);
+        albumsContainerEntityManagerFactoryBean.persist(album);
     }
 
     public List<Album> getAlbums() {
-        CriteriaQuery<Album> cq = entityManager.getCriteriaBuilder().createQuery(Album.class);
+        CriteriaQuery<Album> cq = albumsContainerEntityManagerFactoryBean.getCriteriaBuilder().createQuery(Album.class);
         cq.select(cq.from(Album.class));
-        return entityManager.createQuery(cq).getResultList();
+        return albumsContainerEntityManagerFactoryBean.createQuery(cq).getResultList();
     }
 }

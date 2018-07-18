@@ -17,7 +17,11 @@
 package org.superbiz.moviefun;
 
 import org.apache.commons.lang.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.TransactionCallbackWithoutResult;
+import org.springframework.transaction.support.TransactionOperations;
 import org.superbiz.moviefun.movies.Movie;
 import org.superbiz.moviefun.movies.MoviesBean;
 
@@ -42,6 +46,10 @@ public class ActionServlet extends HttpServlet {
     @EJB
     private MoviesBean moviesBean;
 
+
+    @Autowired
+    private TransactionOperations moviesTransactionOperations;
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         process(request, response);
@@ -55,6 +63,7 @@ public class ActionServlet extends HttpServlet {
     private void process(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String action = request.getParameter("action");
 
+
         if ("Add".equals(action)) {
 
             String title = request.getParameter("title");
@@ -65,7 +74,18 @@ public class ActionServlet extends HttpServlet {
 
             Movie movie = new Movie(title, director, genre, rating, year);
 
-            moviesBean.addMovie(movie);
+
+            moviesTransactionOperations.execute(new TransactionCallbackWithoutResult() {
+                @Override
+                public void doInTransactionWithoutResult(TransactionStatus transactionStatus) {
+                    System.out.print("doInTransactionWithoutResult");
+                    moviesBean.addMovie(movie);
+                    System.out.print("doInTransactionWithoutResult end");
+                }
+            });
+
+
+
             response.sendRedirect("moviefun");
             return;
 
@@ -73,7 +93,15 @@ public class ActionServlet extends HttpServlet {
 
             String[] ids = request.getParameterValues("id");
             for (String id : ids) {
-                moviesBean.deleteMovieId(new Long(id));
+                moviesTransactionOperations.execute(new TransactionCallbackWithoutResult() {
+                    @Override
+                    public void doInTransactionWithoutResult(TransactionStatus transactionStatus) {
+                        System.out.print("doInTransactionWithoutResult");
+                        moviesBean.deleteMovieId(new Long(id));
+                        System.out.print("doInTransactionWithoutResult end");
+                    }
+                });
+
             }
 
             response.sendRedirect("moviefun");
